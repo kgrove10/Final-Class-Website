@@ -1,0 +1,185 @@
+---
+title: "Visualization 1"
+description: |
+  First visualization.
+author:
+  - name: Kivalina Grove
+    url: https://example.com/norajones
+date: 03-06-2019
+output:
+  distill::distill_article:
+    self_contained: false
+categories:
+  - dataviz
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(rio)
+library(dplyr)
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(here)
+```
+
+
+```{r importdata, echo = FALSE}
+d1 <- import(here("data", "201801_hubway_tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "january")
+d2 <- import(here("data", "201802_hubway_tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "february")
+d3 <- import(here("data", "201803_hubway_tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "march")
+d4 <- import(here("data", "201804-hubway-tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "april")
+d5 <- import(here("data", "201805-bluebikes-tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "may")
+d6 <- import(here("data", "201806-bluebikes-tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "june")
+d7 <- import(here("data", "201807-bluebikes-tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "july")
+d8 <- import(here("data", "201808-bluebikes-tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "august")
+d9 <- import(here("data", "201809-bluebikes-tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "september")
+d10 <- import(here("data", "201810-bluebikes-tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "october")
+d11 <- import(here("data", "201811-bluebikes-tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "november")
+d12 <- import(here("data", "201812-bluebikes-tripdata.csv"), setclass = "tbl_df") %>%
+  clean_names() %>%
+  mutate(month = "december")
+
+stations <- import(here("data", "Hubway_Stations_as_of_July_2017.csv"), setclass = "tbl_df") %>%
+  clean_names()
+
+d1 <- d1 %>%
+  mutate(birth_year = as.integer(birth_year))
+
+d2 <- d2 %>%
+  mutate(birth_year = as.integer(birth_year))
+
+d3 <- d3 %>%
+  mutate(birth_year = as.integer(birth_year))
+
+d4 <- d4 %>%
+  mutate(birth_year = as.integer(birth_year))
+
+trips <- bind_rows(d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12)
+
+trips_tidy <- trips %>%
+  separate(starttime, c("startdate", "starttime"), sep = " ") %>%
+  separate(stoptime, c("stopdate", "stoptime"), sep = " ") %>%
+  mutate(startdate = ymd(startdate), stopdate = ymd(stopdate)) %>%
+  #mutate(starttime = hms(starttime), stoptime = hms(stoptime)) %>%
+  mutate(weekday = weekdays(startdate)) %>%
+  separate(starttime, c("hour", "minute", "second"))
+
+#filter by:
+ridesubset <- trips_tidy %>%
+  filter(month == "september", weekday == "Monday", hour == "11", usertype == "Subscriber")
+
+mapsubset <- ridesubset %>%
+  mutate(id = seq.int(nrow(ridesubset))) %>%
+  select(id,
+         start_station_latitude, start_station_longitude, 
+         end_station_latitude, end_station_longitude) %>%
+  gather(key = group, value = location, -id) %>%
+  separate(group, c("group", "disc", "where")) %>%
+  select(-"disc") %>%
+  spread(where, location)
+```
+
+
+```{r points_to_line, message=FALSE, warning=FALSE, echo = FALSE}
+library(sp)
+library(maptools)
+
+points_to_line <- function(data, long, lat, id_field = NULL, sort_field = NULL) {
+
+  # Convert to SpatialPointsDataFrame
+  coordinates(data) <- c(long, lat)
+
+  # If there is a sort field...
+  if (!is.null(sort_field)) {
+    if (!is.null(id_field)) {
+      data <- data[order(data[[id_field]], data[[sort_field]]), ]
+    } else {
+      data <- data[order(data[[sort_field]]), ]
+    }
+  }
+
+  # If there is only one path...
+  if (is.null(id_field)) {
+
+    lines <- SpatialLines(list(Lines(list(Line(data)), "id")))
+
+    return(lines)
+
+    # Now, if we have multiple lines...
+  } else if (!is.null(id_field)) {  
+
+    # Split into a list by ID field
+    paths <- sp::split(data, data[[id_field]])
+
+    sp_lines <- SpatialLines(list(Lines(list(Line(paths[[1]])), "line1")))
+
+    # I like for loops, what can I say...
+    for (p in 2:length(paths)) {
+      id <- paste0("line", as.character(p))
+      l <- SpatialLines(list(Lines(list(Line(paths[[p]])), id)))
+      sp_lines <- spRbind(sp_lines, l)
+    }
+
+    return(sp_lines)
+  }
+}
+```
+
+Visualization 1: map of one bike's travels over the period of a year (here, may to december) 
+Use: advertising - maybe markup after to add like "August 8th - Joe and Sam went on a first date"?
+
+```{r mapOneBike}
+library(leaflet)
+library(shiny)
+
+popularbike <- trips_tidy %>%
+  group_by(bikeid) %>%
+  count() %>%
+  arrange(desc(n))
+ 
+ridesubset <- trips_tidy %>%
+  filter(bikeid == head(popularbike$bikeid, 1))
+
+mapsubset <- ridesubset %>%
+    mutate(id = seq.int(nrow(ridesubset))) %>%
+    select(id,month,
+         start_station_latitude, start_station_longitude, 
+         end_station_latitude, end_station_longitude) %>%
+  gather(key = group, value = location, -id, -month) %>%
+  separate(group, c("group", "disc", "where")) %>%
+  select(-"disc") %>%
+  spread(where, location)
+
+y <- points_to_line(mapsubset, "longitude", "latitude", "id")
+
+stations %>%
+  leaflet() %>%
+  addProviderTiles("CartoDB") %>%
+  addPolylines(data = y, opacity = 0.1, weight = 3, color = "blue") %>%
+    addCircleMarkers(popup = stations$station, 
+                   radius = 1, 
+                   color = "black")
+```
