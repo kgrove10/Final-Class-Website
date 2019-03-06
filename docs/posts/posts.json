@@ -1,0 +1,17 @@
+[
+  {
+    "path": "posts/welcome/",
+    "title": "Welcome to EDLD 610 Final Website",
+    "description": "Welcome to our new blog, EDLD 610 Final Website. We hope you enjoy \nreading what we have to say!",
+    "author": [
+      {
+        "name": "Kivalina Grove",
+        "url": "https://example.com/norajones"
+      }
+    ],
+    "date": "2019-03-06",
+    "categories": [],
+    "preview": {},
+    "last_modified": "2019-03-06T10:33:09-08:00"
+  }
+]

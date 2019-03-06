@@ -1,0 +1,5 @@
+---
+title: "EDLD 610 Final Website"
+site: distill::distill_website
+listing: posts
+---
