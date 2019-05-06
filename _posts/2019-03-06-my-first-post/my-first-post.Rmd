@@ -18,14 +18,11 @@ knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 ```
 
-Here is a basic figure that we are going to play around with. 
+[Clean](https://oregon.qualtrics.com/jfe/form/SV_1zVIXDOn8Qv7vU1)
 
-```{r plot1}
-ggplot(mpg, aes(x = displ, y = cty)) +
-  geom_point(aes(color = drv)) +
-  geom_smooth() +
-  theme_minimal()
-```
+[Personalize](https://oregon.qualtrics.com/jfe/form/SV_0ujUGDCDV0Y5WDj)
 
-... and here is more text. 
+[Wear](https://oregon.qualtrics.com/jfe/form/SV_agdWmBK7HX72Nw1)
+
+[Look](https://oregon.qualtrics.com/jfe/form/SV_87Fnt4X0SOEMUnj)
 
