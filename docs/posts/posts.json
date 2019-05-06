@@ -1,12 +1,12 @@
 [
   {
     "path": "posts/2019-03-06-my-first-post/",
-    "title": "My first post",
-    "description": "A short description of the post.",
+    "title": "Bicycle Helmet Lab Links",
+    "description": "Links to Qualtrics Studies for Bike Lab Study",
     "author": [
       {
         "name": "Kivalina Grove",
-        "url": "https://example.com/norajones"
+        "url": {}
       }
     ],
     "date": "2019-03-06",
@@ -14,7 +14,7 @@
       "dataviz"
     ],
     "preview": {},
-    "last_modified": "2019-05-06T13:20:51-07:00"
+    "last_modified": "2019-05-06T13:26:20-07:00"
   },
   {
     "path": "posts/welcome/",
